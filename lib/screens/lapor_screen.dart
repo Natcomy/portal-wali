@@ -1,26 +1,61 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class LaporScreen extends StatefulWidget {
-  const LaporScreen({super.key});
+  // 1. Menerima parameter daftar siswa dari Main Layout
+  final List<dynamic> studentsList; 
+  
+  const LaporScreen({super.key, required this.studentsList});
 
   @override
   State<LaporScreen> createState() => _LaporScreenState();
 }
 
 class _LaporScreenState extends State<LaporScreen> {
-  // PERBAIKAN: Menggunakan TextEditingController untuk input text alih-alih property 'value' langsung
   final TextEditingController _keluhanController = TextEditingController();
   String tingkat = 'Ringan';
+  String? selectedStudent; // State untuk menyimpan anak yang dipilih
   bool isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Otomatis memilih anak pertama sebagai default jika daftarnya tidak kosong
+    if (widget.studentsList.isNotEmpty) {
+      selectedStudent = widget.studentsList[0]['id'].toString();
+    }
+  }
 
   void handleSubmit() async {
     if (_keluhanController.text.isEmpty) return;
+
+    if (selectedStudent == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Harap pilih nama anak terlebih dahulu!'), backgroundColor: Colors.red));
+      return;
+    }
+
     setState(() => isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 1)); // Simulasi API
-    setState(() { isSubmitting = false; _keluhanController.clear(); });
     
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan berhasil dikirim ke pihak sekolah.'), backgroundColor: Colors.blue));
+    try {
+      // 2. Menembak payload langsung ke API Laravel
+      final payload = {
+        'student_id': selectedStudent,
+        'urgency_level': tingkat,
+        'description': _keluhanController.text,
+      };
+      
+      await WaliApiService.submitComplaint(payload);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan berhasil dikirim ke Kepala Sekolah.'), backgroundColor: Colors.blue));
+        setState(() { _keluhanController.clear(); });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => isSubmitting = false);
     }
   }
 
@@ -46,6 +81,23 @@ class _LaporScreenState extends State<LaporScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // DROPDOWN PILIH ANAK
+                const Text('Terkait Anak', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedStudent,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)), filled: true, fillColor: Colors.white,
+                  ),
+                  items: widget.studentsList.map((s) => DropdownMenuItem(
+                    value: s['id'].toString(), 
+                    child: Text(s['nama'].toString(), style: const TextStyle(fontWeight: FontWeight.bold))
+                  )).toList(),
+                  onChanged: (val) => setState(() => selectedStudent = val),
+                ),
+                const SizedBox(height: 20),
+
+                // DROPDOWN TINGKAT URGENSI
                 const Text('Tingkat Urgensi', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
@@ -58,11 +110,12 @@ class _LaporScreenState extends State<LaporScreen> {
                 ),
                 const SizedBox(height: 20),
                 
+                // INPUT KELUHAN
                 const Text('Pesan / Laporan', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1)),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _keluhanController, // Menggunakan controller dengan benar
-                  onChanged: (val) => setState(() {}), // Memaksa re-build untuk update state tombol submit
+                  controller: _keluhanController, 
+                  onChanged: (val) => setState(() {}), 
                   maxLines: 5,
                   decoration: InputDecoration(
                     hintText: 'Tuliskan detail laporan Anda di sini...',
@@ -73,6 +126,7 @@ class _LaporScreenState extends State<LaporScreen> {
                 ),
                 const SizedBox(height: 24),
                 
+                // TOMBOL KIRIM API
                 SizedBox(
                   width: double.infinity, height: 56,
                   child: ElevatedButton.icon(

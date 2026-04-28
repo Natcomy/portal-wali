@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 import 'api_config.dart';
 
 class WaliApiService {
-  static String? authToken; // Token Sanctum milik Wali Murid
+  static String? authToken; 
 
-  // 1. LOGIN (DIUBAH KARENA SEKARANG PAKAI AUTH SAMA SEPERTI GURU)
+  // 1. LOGIN WALI MURID
   static Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/login');
     final response = await http.post(
@@ -22,42 +22,40 @@ class WaliApiService {
       
       authToken = data['data']['access_token']; 
       
-      // Setelah login sukses, langsung tarik data dashboard wali
+      // Langsung tarik data dashboard anak setelah token didapat
       return await getDashboardData();
     } else {
       throw Exception(data['message'] ?? 'Login gagal. Periksa Username dan Password.');
     }
   }
 
-  // 2. MENGAMBIL DATA DASHBOARD ANAK (Dari endpoint getDashboardData)
+  // 2. MENGAMBIL DATA DASHBOARD ANAK
   static Future<Map<String, dynamic>> getDashboardData() async {
     final url = Uri.parse('${ApiConfig.baseUrl}/parent/dashboard');
     final response = await http.get(url, headers: ApiConfig.getHeaders(authToken));
     final data = jsonDecode(response.body);
     
     if (response.statusCode == 200 && data['success']) {
-      return data['data']; // Mengembalikan { students, pengumuman, tugas, tahfidz, catatan }
+      return data['data']; 
     } else {
       throw Exception(data['message'] ?? 'Gagal memuat data anak.');
     }
   }
 
-  // 2. KIRIM KOMPLAIN / BANTUAN
-  static Future<bool> sendComplaint(String studentId, String tingkat, String keluhan) async {
+  // 3. MENGIRIM KOMPLAIN / LAPORAN
+  static Future<void> submitComplaint(Map<String, dynamic> payload) async {
+    if (authToken == null) throw Exception('Sesi tidak valid.');
+    
     final url = Uri.parse('${ApiConfig.baseUrl}/parent/complaints');
     final response = await http.post(
       url,
       headers: ApiConfig.getHeaders(authToken),
-      body: jsonEncode({
-        'student_id': studentId,
-        'tingkat': tingkat,
-        'keluhan': keluhan,
-      }),
+      body: jsonEncode(payload),
     );
     
-    if (response.statusCode != 200) {
-      throw Exception('Gagal mengirim laporan. Coba lagi.');
+    final resData = jsonDecode(response.body);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(resData['message'] ?? 'Gagal mengirim laporan.');
     }
-    return true;
   }
 }

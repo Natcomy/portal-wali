@@ -4,8 +4,8 @@ import '../screens/tugas_screen.dart';
 import '../screens/lapor_screen.dart';
 
 class MainLayout extends StatefulWidget {
-  final Map<String, dynamic> studentData;
-  const MainLayout({super.key, required this.studentData});
+  final Map<String, dynamic> dashboardData;
+  const MainLayout({super.key, required this.dashboardData});
 
   @override
   State<MainLayout> createState() => _MainLayoutState();
@@ -18,11 +18,17 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
-    // Data dilempar dari Layout ke masing-masing Halaman
+    
+    // Ekstrak data dari API untuk dilempar ke masing-masing tab
+    final tugasList = widget.dashboardData['tugas'] ?? [];
+    final tahfidzList = widget.dashboardData['tahfidz'] ?? [];
+    // Untuk LaporScreen, kita kirim daftar students agar Wali bisa milih anak mana yang dikomplainkan
+    final studentsList = widget.dashboardData['students'] ?? []; 
+
     _pages = [
-      HomeScreen(data: widget.studentData),
-      TugasScreen(tugasList: widget.studentData['tugas'] ?? [], tahfidzList: widget.studentData['tahfidz'] ?? []),
-      const LaporScreen(),
+      HomeScreen(data: widget.dashboardData),
+      TugasScreen(tugasList: tugasList, tahfidzList: tahfidzList),
+      LaporScreen(studentsList: studentsList),
     ];
   }
 
@@ -38,14 +44,15 @@ class _MainLayoutState extends State<MainLayout> {
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: const Color(0xFF3F62E2),
+            selectedItemColor: const Color(0xFF3F62E2), // Biru/Indigo Wali
             unselectedItemColor: Colors.grey.shade400,
+            showUnselectedLabels: true,
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10),
             unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Beranda'),
               BottomNavigationBarItem(icon: Icon(Icons.menu_book_rounded), label: 'Akademik'),
-              BottomNavigationBarItem(icon: Icon(Icons.support_agent_rounded), label: 'Bantuan'),
+              BottomNavigationBarItem(icon: Icon(Icons.headset_mic_rounded), label: 'Bantuan'),
             ],
           ),
         ),

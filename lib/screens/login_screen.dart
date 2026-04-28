@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '_home_screen.dart';
-import '../../services/api_service.dart';
+import '../layouts/main_layout.dart'; // Sesuaikan dengan layout dashboard wali Anda
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,12 +25,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // Login dan langsung dapat data lengkap dashboard anak
-      final dataDashboard = await ApiService.login(_usernameController.text, _passwordController.text);
+      final dataDashboard = await WaliApiService.login(_usernameController.text, _passwordController.text);
       
       if (mounted) {
-        // Navigasi ke beranda  dengan membawa data anak
+        // PERBAIKAN: Navigasi ke MainLayoutWali (bukan WaliHomeScreen langsung)
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => HomeScreen(data: dataDashboard))
+          MaterialPageRoute(builder: (_) => MainLayout(dashboardData: dataDashboard))
         );
       }
     } catch (e) {
@@ -73,12 +73,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Icon(Icons.family_restroom, size: 48, color: Colors.white),
                   ),
                   const SizedBox(height: 24),
-                  const Text('Portal ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
+                  const Text('Portal Wali', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
                   const SizedBox(height: 4),
                   const Text('PEMANTAUAN AKADEMIK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF3B82F6), letterSpacing: 2)),
                   const SizedBox(height: 40),
                   
-                  // Input Username 
+                  // Input Username Wali
                   TextFormField(
                     controller: _usernameController,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Input Password 
+                  // Input Password Wali
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscureText,
