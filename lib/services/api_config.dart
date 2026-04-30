@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'http://127.0.0.1:8000/api'; 
+  static const String baseUrl = 'https://overcerebral-unsteadily-charmaine.ngrok-free.dev/api'; 
   
   static Map<String, String> getHeaders([String? token]) {
     Map<String, String> headers = {
